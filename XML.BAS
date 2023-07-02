@@ -1,4 +1,5 @@
-
+' converter for Wordpress Export XML files, so that the idiots over there won't cause any more damage blocking blogs for no reason
+' G.Dar 2/7/2023
 
 OPEN "wp.xml" FOR INPUT AS 1
 OPEN "wpout.html" FOR OUTPUT AS 2
@@ -12,12 +13,13 @@ WHILE NOT EOF(1)
     IF intag% = 0 THEN
       IF inwp% = 0 THEN
         IF line$ <> "" THEN
+          IF ASC(line$) <> 10 THEN
             IF LEFT$(line$, 2) <> "]]" THEN
-              PRINT #2, line$;
+            PRINT #2, line$;
             ELSE
               PRINT #2, "<br>"
             END IF
-            PRINT #2, line$;
+          
             IF inimage% = 0 AND inlink% = 0 AND intitle% = 0 THEN PRINT #2, "<br>" ELSE PRINT #2,
           END IF
         END IF
@@ -60,7 +62,7 @@ WHILE NOT EOF(1)
         CASE "/item"
           initem% = 0
         CASE "link"
-          PRINT #2, "<a href= "
+          PRINT #2, "<a name= "
           inlink% = 1
         CASE "/link"
           PRINT #2, "></a>"
