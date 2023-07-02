@@ -46,10 +46,10 @@ WHILE NOT EOF(1)
       ELSE
         SELECT CASE line$
           CASE "title"
-            PRINT #2, "<title>"
+            IF initem% = 0 THEN PRINT #2, "<title>"
             intitle% = 1
           CASE "/title"
-            PRINT #2, "</title>"
+            IF initem% = 0 THEN PRINT #2, "</title>"
             intitle% = 0
           CASE "image"
             PRINT #2, "<img src= "
@@ -71,6 +71,10 @@ WHILE NOT EOF(1)
             PRINT #2, "<b>"
           CASE "/pubDate"
             PRINT #2, "</b>"
+          CASE "description"
+            PRINT #2, "<h1>"
+          CASE "/description"
+            PRINT #2, "</h1>"
             
           CASE "dc:creator"
             inskip% = 1
@@ -83,6 +87,7 @@ WHILE NOT EOF(1)
             IF LEFT$(line$, 3) = "/wp" THEN inwp% = 0
             IF LEFT$(line$, 4) = "guid" THEN inskip% = 1 ' il link interno
             IF LEFT$(line$, 5) = "/guid" THEN inskip% = 0
+            IF intitle% AND LEFT$(line$, 8) = "![CDATA[" THEN PRINT #2, "<h2>"; MID$(line$, 9, LEN(line$) - 10); "</h2>" ' ]] finali...
         END SELECT
       END IF
       intag% = 0
@@ -110,6 +115,8 @@ WHILE NOT EOF(1)
           a$ = INPUT$(1, 1)  ' 80h fisso
           a$ = INPUT$(1, 1)
           SELECT CASE ASC(a$)
+            CASE &H99
+              a$ = "'"
             CASE &H9C
               a$ = "?"
             CASE &H9D
