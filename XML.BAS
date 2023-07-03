@@ -1,8 +1,12 @@
 ' converter for Wordpress Export XML files, so that the idiots over there won't cause any more damage blocking blogs for no reason
 ' G.Dar 2/7/2023
 
-OPEN "wp.xml" FOR INPUT AS 1
-OPEN "wpout.html" FOR OUTPUT AS 2
+if$ = "wp.xml": of$ = "wpout.htm"
+OPEN if$ FOR INPUT AS 1
+OPEN of$ FOR OUTPUT AS 2
+
+first% = 1
+PRINT #2, "<! " + if$ + " converted by G.Dar converter on " + DATE$ + ">"
 
 WHILE NOT EOF(1)
   a$ = INPUT$(1, 1)
@@ -76,6 +80,32 @@ WHILE NOT EOF(1)
           CASE "/description"
             PRINT #2, "</h1>"
             
+          CASE "em"
+            PRINT #2, "<i>"
+          CASE "/em"
+            PRINT #2, "</i>"
+          CASE "strong"
+            PRINT #2, "<b>"
+          CASE "/strong"
+            PRINT #2, "</b>"
+          CASE "strike"
+            PRINT #2, "<strike>"
+          CASE "/strike"
+            PRINT #2, "</strike>"
+          CASE "span style=" + CHR$(34) + "text/decoration: underline" + CHR$(34)
+            PRINT #2, "<>"
+          CASE "/span"
+            PRINT #2, "</>"
+          CASE "ul"
+            PRINT #2, "<ul>"
+          CASE "/ul"
+            PRINT #2, "</ul>"
+          CASE "li"
+            PRINT #2, "<li>"
+          CASE "/li"
+            PRINT #2, "</li>"
+            
+
           CASE "dc:creator"
             inskip% = 1
           CASE "/dc:creator"
@@ -87,7 +117,17 @@ WHILE NOT EOF(1)
             IF LEFT$(line$, 3) = "/wp" THEN inwp% = 0
             IF LEFT$(line$, 4) = "guid" THEN inskip% = 1 ' il link interno
             IF LEFT$(line$, 5) = "/guid" THEN inskip% = 0
-            IF intitle% AND LEFT$(line$, 8) = "![CDATA[" THEN PRINT #2, "<h2>"; MID$(line$, 9, LEN(line$) - 10); "</h2>" ' ]] finali...
+            IF intitle% AND LEFT$(line$, 8) = "![CDATA[" THEN
+              IF first% = 0 THEN PRINT #2, "<hr>"
+              IF first% = 1 THEN first% = 0
+              PRINT #2, "<h2>"; MID$(line$, 9, LEN(line$) - 10); "</h2>" ' ]] finali...
+            END IF
+            IF LEFT$(line$, 6) = "a href" THEN
+              PRINT #2, "<"; line$; ">"
+            END IF
+            IF line$ = "/a" THEN
+              PRINT #2, "<"; line$; ">"
+            END IF
         END SELECT
       END IF
       intag% = 0
