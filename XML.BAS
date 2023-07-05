@@ -1,5 +1,5 @@
 ' converter for Wordpress Export XML files, so that the idiots over there won't cause any more damage blocking blogs for no reason
-' G.Dar 2/7/2023
+' G.Dar 2/7/2023-5/7/2023
 
 if$ = "wp.xml": of$ = "wpout.htm"
 OPEN if$ FOR INPUT AS 1
@@ -27,6 +27,11 @@ WHILE NOT EOF(1)
               IF inimage% = 0 AND inlink% = 0 AND intitle% = 0 THEN PRINT #2, "<br>" ELSE PRINT #2,
             END IF
           END IF
+        ELSE
+          SELECT CASE line$
+            CASE "wp:comment_content"
+              PRINT #2, "COMMENTO" + line$
+          END SELECT
         END IF
       END IF
 
@@ -46,6 +51,11 @@ WHILE NOT EOF(1)
               IF inimage% = 0 AND inlink% = 0 AND intitle% = 0 THEN PRINT #2, "<br>" ELSE PRINT #2,
             END IF
           END IF
+        ELSE
+          SELECT CASE line$
+            CASE "wp:comment_content"
+              PRINT #2, "COMMENTO" + line$
+          END SELECT
         END IF
       ELSE
         SELECT CASE line$
@@ -80,6 +90,11 @@ WHILE NOT EOF(1)
           CASE "/description"
             PRINT #2, "</h1>"
             
+            CASE "wp:comment_content"
+              incomment% = 1
+            CASE "/wp:comment_content"
+              incomment% = 0
+
           CASE "em"
             PRINT #2, "<i>"
           CASE "/em"
@@ -128,6 +143,10 @@ WHILE NOT EOF(1)
             IF line$ = "/a" THEN
               PRINT #2, "<"; line$; ">"
             END IF
+            IF incomment% THEN
+              PRINT #2, "COMMENTO: " + MID$(line$, 9, LEN(line$) - 10); "<br>"; "<br>"
+            END IF
+
         END SELECT
       END IF
       intag% = 0
