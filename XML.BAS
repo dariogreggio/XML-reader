@@ -28,10 +28,7 @@ WHILE NOT EOF(1)
             END IF
           END IF
         ELSE
-          SELECT CASE line$
-            CASE "wp:comment_content"
-              PRINT #2, "COMMENTO" + line$
-          END SELECT
+
         END IF
       END IF
 
@@ -52,10 +49,7 @@ WHILE NOT EOF(1)
             END IF
           END IF
         ELSE
-          SELECT CASE line$
-            CASE "wp:comment_content"
-              PRINT #2, "COMMENTO" + line$
-          END SELECT
+
         END IF
       ELSE
         SELECT CASE line$
@@ -76,7 +70,7 @@ WHILE NOT EOF(1)
           CASE "/item"
             initem% = 0
           CASE "link"
-            PRINT #2, "<a name= "
+            PRINT #2, "<a name= ";
             inlink% = 1
           CASE "/link"
             PRINT #2, "></a>"
@@ -90,10 +84,18 @@ WHILE NOT EOF(1)
           CASE "/description"
             PRINT #2, "</h1>"
             
-            CASE "wp:comment_content"
-              incomment% = 1
-            CASE "/wp:comment_content"
-              incomment% = 0
+          CASE "wp:comment_content"
+            incomment% = 1
+          CASE "/wp:comment_content"
+            incomment% = 0
+          CASE "wp:comment_date"
+            incomment2% = 1
+          CASE "/wp:comment_date"
+            incomment2% = 0
+          CASE "wp:comment_author"
+            incomment3% = 1
+          CASE "/wp:comment_author"
+            incomment3% = 0
 
           CASE "em"
             PRINT #2, "<i>"
@@ -144,7 +146,13 @@ WHILE NOT EOF(1)
               PRINT #2, "<"; line$; ">"
             END IF
             IF incomment% THEN
-              PRINT #2, "COMMENTO: " + MID$(line$, 9, LEN(line$) - 10); "<br>"; "<br>"
+              PRINT #2, "COMMENTO: "; MID$(line$, 9, LEN(line$) - 10); "<br>"; "<br>"
+            END IF
+            IF incomment2% THEN
+              PRINT #2, "-"; line$; "<br>"    'spariscono i trattini???
+            END IF
+            IF incomment3% THEN
+              PRINT #2, "--"; MID$(line$, 9, LEN(line$) - 10); "<br>"
             END IF
 
         END SELECT
