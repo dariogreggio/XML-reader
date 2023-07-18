@@ -125,6 +125,10 @@ WHILE NOT EOF(1)
 				END IF
 			ELSE
 				SELECT CASE line$
+					CASE "p"
+						'PRINT #2, "{\pard "
+					CASE "/p"
+						'PRINT #2, "}"
 					CASE "title"
 						IF initem% = 0 THEN
 							PRINT #2, "{\title "
@@ -238,7 +242,8 @@ WHILE NOT EOF(1)
 						checkBR
 						PRINT #2, "</strike>"
 						onepost.content = onepost.content + "</strike>"
-					CASE "span style=" + CHR$(34) + "text/decoration: underline" + CHR$(34)
+'          CASE "span style=" + CHR$(34) + "text/decoration: underline" + CHR$(34)
+					CASE "span style=" + CHR$(34) + "text-decoration: underline" + CHR$(34)
 						checkBR
 						PRINT #2, "{\ul"
 						onepost.content = onepost.content + "{\ul"
@@ -284,6 +289,7 @@ WHILE NOT EOF(1)
 
 				 
 					CASE ELSE
+
 						IF LEFT$(line$, 2) = "wp" THEN inwp% = 1
 						IF LEFT$(line$, 3) = "/wp" THEN inwp% = 0
 						IF LEFT$(line$, 4) = "guid" THEN inskip% = 1 ' il link interno
@@ -464,13 +470,13 @@ END FUNCTION
 SUB checkBR
 	CLOSE 2
 	OPEN of$ FOR INPUT AS 2
-	SEEK 2, LOF(2) - 5
+	SEEK 2, LOF(2) - 6
 '  EXIT SUB
-	a$ = INPUT$(2, 2)
+	a$ = INPUT$(4, 2)
 	CLOSE 2
 	OPEN of$ FOR APPEND AS 2
-	IF a$ = "<b" THEN
-		SEEK 2, LOF(2) - 5
+	IF a$ = "\par" THEN
+		SEEK 2, LOF(2) - 6
 		PRINT #2,
 	ELSE
 		SEEK 2, LOF(2)
