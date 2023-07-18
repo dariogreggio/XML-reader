@@ -3,7 +3,7 @@ DECLARE FUNCTION calcdate (a$)
 DECLARE FUNCTION getdate$ ()
 
 ' converter for Wordpress Export XML files to RTF, so that the idiots over there won't cause any more damage blocking blogs for no reason
-' G.Dar 2/7/2023-17/7/2023
+' G.Dar 2/7/2023-18/7/2023
 
 ' https://www.biblioscape.com/rtf15_spec.htm#Heading49
 
@@ -131,10 +131,10 @@ WHILE NOT EOF(1)
 						'PRINT #2, "}"
 					CASE "title"
 						IF initem% = 0 THEN
-							PRINT #2, "{\title "
+							PRINT #2, "{\pard "    'PRINT #2, "{\title "
 'PRINT #2, "{\info";"{\title ";
-							intitle% = 1
 						END IF
+						intitle% = 1
 					CASE "/title"
 						IF initem% = 0 THEN
 							PRINT #2, "}"
@@ -191,7 +191,7 @@ WHILE NOT EOF(1)
 						onepost.content = onepost.content + "{\bkmkend }"
 						inlink% = 0
 					CASE "pubDate"
-						PRINT #2, "{\b"
+						PRINT #2, "{\par \b"
 						onepost.content = onepost.content + "{\b"
 						indate% = 1
 					CASE "/pubDate"
@@ -298,7 +298,7 @@ WHILE NOT EOF(1)
 							IF first% = 0 THEN
 								IF postdate <> oldpostdate THEN
 									oldpostdate = postdate
-									PRINT #2, "\page "; CHR$(10); "{\bkmkstart "; monthref$; "} - {\bkmkend "; monthref$; "}"
+									PRINT #2, "\page "; CHR$(10); "{\*\bkmkstart "; monthref$; "}\tab{\*\bkmkend "; monthref$; "}"
 								ELSE
 									PRINT #2, "\pard \qj\widctlpar\adjustright"
 								END IF
@@ -306,8 +306,8 @@ WHILE NOT EOF(1)
 							IF first% = 1 THEN first% = 0
 
 							onepost.title = ""     ' ...
-							onepost.title = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "<h2>"; onepost.title; "</h2>" ' ]] finali...
+							onepost.title = MID$(line$, 9, LEN(line$) - 10)   ' ]] finali...
+							PRINT #2, "{\pard "; onepost.title; "}"
 
 							
 							onepost.date = ""
@@ -319,9 +319,9 @@ WHILE NOT EOF(1)
 						END IF
 						IF LEFT$(line$, 6) = "a href" THEN
 							checkBR
-							PRINT #2, "<"; line$; ">"
+							PRINT #2, "{\field{\*\fldinst { HYPERLINK "; line$;
 
-							onepost.content = onepost.content + "<" + line$ + ">"
+							onepost.content = onepost.content + "{" + line$
 						END IF
 						IF line$ = "/a" THEN
 							checkBR
