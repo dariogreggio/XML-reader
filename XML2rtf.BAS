@@ -3,7 +3,7 @@ DECLARE FUNCTION calcdate (a$)
 DECLARE FUNCTION getdate$ ()
 
 ' converter for Wordpress Export XML files to RTF, so that the idiots over there won't cause any more damage blocking blogs for no reason
-' G.Dar 2/7/2023-18/7/2023
+' G.Dar 2/7/2023-23/7/2023
 
 ' https://www.biblioscape.com/rtf15_spec.htm#Heading49
 
@@ -131,14 +131,19 @@ WHILE NOT EOF(1)
 						'PRINT #2, "}"
 					CASE "title"
 						IF initem% = 0 THEN
-							PRINT #2, "{\pard "    'PRINT #2, "{\title "
+							PRINT #2, "{\pard\fs36\i\b "    'PRINT #2, "{\title "
 'PRINT #2, "{\info";"{\title ";
+						ELSE
+							PRINT #2, "{\pard\fs28\ul "
+							IF onepost.categories <> "" THEN PRINT #2, "\par "
 						END IF
 						intitle% = 1
 					CASE "/title"
 						IF initem% = 0 THEN
 							PRINT #2, "}"
 						' FINIRE esce anche con IMG SRC..
+						ELSE
+							PRINT #2, "}"
 						END IF
 
 '           {\version2}
@@ -182,16 +187,16 @@ WHILE NOT EOF(1)
 					CASE "/item"
 						initem% = 0
 					CASE "link"
-						PRINT #2, "{\bkmkstart } ";
-						onepost.content = onepost.content + "{\bkmkstart } "
+						PRINT #2, "{\par\bkmkstart ";
+						onepost.content = onepost.content + "{\bkmkstart "
 						inlink% = 1
 						' la GRAFFA andrebbe chiusa DOPO il link...
 					CASE "/link"
-						PRINT #2, "{\bkmkend }"
-						onepost.content = onepost.content + "{\bkmkend }"
+						PRINT #2, "\par }{\bkmkend}"
+						onepost.content = onepost.content + "\par }{\bkmkend "
 						inlink% = 0
 					CASE "pubDate"
-						PRINT #2, "{\par \b"
+						PRINT #2, "{\pard\fs22\li0\b"
 						onepost.content = onepost.content + "{\b"
 						indate% = 1
 					CASE "/pubDate"
@@ -325,27 +330,27 @@ WHILE NOT EOF(1)
 						END IF
 						IF line$ = "/a" THEN
 							checkBR
-							PRINT #2, "}"
-							onepost.content = onepost.content + "}"
+							PRINT #2, "a } } }"
+							onepost.content = onepost.content + "} } }"
 						END IF
 						IF LEFT$(line$, 9) = "div class" THEN   ' x youtube link, ev finire
 							checkBR
 							PRINT #2, "{\field{\*\fldinst { HYPERLINK " + line$ + " }{{\*\datafield "
-							PRINT #2, "00d0c9ea79f9bace118c8200aa004ba90b02000000170000001a000000680074007400700073003a002f002f007700770077002e00660061006300650062006f006f006b002e0063006f006d002f000000e0c9ea79f9bace118c8200aa004ba90b4c000000680074007400700073003a002f002f007700770077002e006600"
-							PRINT #2, "61006300650062006f006f006b002e0063006f006d002f000000795881f43b1d7f48af2c825dc485276300000000a5ab0000}}}{\fldrslt {\cs15\ul\cf2 "; line$; "}}}"
+							'PRINT #2, "00d0c9ea79f9bace118c8200aa004ba90b02000000170000001a000000680074007400700073003a002f002f007700770077002e00660061006300650062006f006f006b002e0063006f006d002f000000e0c9ea79f9bace118c8200aa004ba90b4c000000680074007400700073003a002f002f007700770077002e006600"
+							'PRINT #2, "61006300650062006f006f006b002e0063006f006d002f000000795881f43b1d7f48af2c825dc485276300000000a5ab0000}}}{\fldrslt {\cs15\ul\cf2 "; line$;       ' "}}}"
 
-							onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + line$ + "}}}"  ' finire..
+							onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + line$   ' + "}}}"  ' finire..
 						END IF
 						IF LEFT$(line$, 4) = "/div" THEN
 							checkBR
-							PRINT #2, "}"
-							onepost.content = onepost.content + "}"
+							PRINT #2, "} } }"
+							onepost.content = onepost.content + "} } }"
 						END IF
 						IF LEFT$(line$, 8) = "category" THEN  ' tag/categorie
 							checkBR
 							a$ = MID$(line$, 38): a$ = LEFT$(a$, LEN(a$) - 1)
 							IF a$ <> "uncategorized" THEN
-								PRINT #2, "Categoria "; a$; "; \par \pard \ql\widctlpar\adjustright"  ' controllare se non e' la prima e togliere la parola!
+								PRINT #2, "{\fs18\ql\widctlpar\adjustright Categoria "; a$; "; \par }"  ' controllare se non e' la prima e togliere la parola!
 								onepost.categories = onepost.categories + ";" + a$
 							END IF
 						END IF
@@ -355,15 +360,15 @@ WHILE NOT EOF(1)
 
 						IF incomment% THEN
 							onecomment.content = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "COMMENTO: "; onecomment.content; "\par "; "\par "
+							PRINT #2, "\li367 COMMENTO: "; onecomment.content; "\pard "
 						END IF
 						IF incomment2% THEN
 							onecomment.date = line$
-							PRINT #2, "-"; onecomment.date; "\par "    'spariscono i trattini???
+							PRINT #2, "\li567 "; onecomment.date; "\pard "    'spariscono i trattini???
 						END IF
 						IF incomment3% THEN
 							onecomment.author = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "--"; onecomment.author; "\par "
+							PRINT #2, "\li767 "; onecomment.author; "\pard "
 						END IF
 
 				END SELECT
