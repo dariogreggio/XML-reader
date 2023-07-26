@@ -1,3 +1,5 @@
+'$DYNAMIC
+
 DECLARE SUB checkBR ()
 DECLARE FUNCTION calcdate (a$)
 DECLARE FUNCTION getdate$ ()
@@ -5,7 +7,9 @@ DECLARE FUNCTION getdate$ ()
 ' converter for Wordpress Export XML files to RTF, so that the idiots over there won't cause any more damage blocking blogs for no reason
 ' G.Dar 2/7/2023-26/7/2023
 
+
 ' https://www.biblioscape.com/rtf15_spec.htm
+' https://www.pcjs.org/documents/books/mspl13/basic/qblang/
 
 CLS
 DIM SHARED of$
@@ -80,7 +84,7 @@ WHILE NOT EOF(1)
 							IF LEFT$(line$, 2) <> "]]" THEN
 								PRINT #2, line$;
 '\pard\plain \s1\sb240\sa60\keepn\widctlpar\outlinelevel0\adjustright \b\f1\fs28\lang1040\kerning28\cgrid {
-								onepost.content = onepost.content + line$
+'                onepost.content = onepost.content + line$
 							ELSE
 								PRINT #2, "\par "
 							END IF
@@ -112,7 +116,7 @@ WHILE NOT EOF(1)
 							IF LEFT$(line$, 2) <> "]]" THEN
 								PRINT #2, line$;
 
-								onepost.content = onepost.content + line$
+'                onepost.content = onepost.content + line$
 							ELSE
 								PRINT #2, "\par "
 							END IF
@@ -253,7 +257,7 @@ WHILE NOT EOF(1)
 							onepost.content = onepost.content + "{\ul"
 					CASE "span"
 							checkBR
-							PRINT #2, "{"
+							PRINT #2, "{ "    ' differenzio per checkBR
 							onepost.content = onepost.content + "{"
 					CASE "/span"
 						checkBR
@@ -284,7 +288,7 @@ WHILE NOT EOF(1)
 						onepost.content = onepost.content + "}"
 					CASE "li"
 						PRINT #2, "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
-						onepost.content = onepost.content + "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
+'            onepost.content = onepost.content + "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
 					CASE "/li"
 						PRINT #2, "}"
 						onepost.content = onepost.content + "}"
@@ -327,12 +331,18 @@ WHILE NOT EOF(1)
 							onecomment.date = ""
 							onecomment.author = ""
 
+							'ERASE onepost
+							'ERASE line$ porcodio
+							line$ = ""
+							a$ = ""
+							'ERASE a$
+
 						END IF
 						IF LEFT$(line$, 6) = "a href" THEN
 							checkBR
 							PRINT #2, "{\field{\*\fldinst { HYPERLINK "; MID$(line$, 8)
 							PRINT #2, "}}}{\fldrst {\cs15\ul\cf2 ";
-							onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + MID$(line$, 8) + "}}}{\fldrst {\cs15\ul\cf2 "
+				 '     onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + MID$(line$, 8) + "}}}{\fldrst {\cs15\ul\cf2 "
 						END IF
 						IF line$ = "/a" THEN
 							checkBR
@@ -346,11 +356,15 @@ WHILE NOT EOF(1)
 							'PRINT #2, "61006300650062006f006f006b002e0063006f006d002f000000795881f43b1d7f48af2c825dc485276300000000a5ab0000}}}{\fldrslt {\cs15\ul\cf2 "; line$;       ' "}}}"
 							PRINT #2, "0000}}}{\fldrslt {\cs15\ul\cf2 "; line$       ' "}}}"
 
-							onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + line$   ' + "}}}"  ' finire..
+'              onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + line$   ' + "}}}"  ' finire..
 						END IF
 						IF LEFT$(line$, 9) = "div style" THEN   ' in pratica inutili
 							checkBR
 							PRINT #2, "{{{style"
+						END IF
+						IF LEFT$(line$, 6) = "div id" THEN   ' in pratica inutili
+							checkBR
+							PRINT #2, "{{{id"
 						END IF
 						IF LEFT$(line$, 4) = "/div" THEN
 							checkBR
@@ -374,16 +388,20 @@ WHILE NOT EOF(1)
 						END IF
 
 						IF incomment% THEN
-							onecomment.content = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "\li367 COMMENTO: "; RTRIM$(onecomment.content); "\pard "
+							IF LEN(line$) > 10 THEN ' patch memory porcodio
+								onecomment.content = MID$(line$, 9, LEN(line$) - 10)
+							ELSE
+								onecomment.content = line$
+							END IF
+							PRINT #2, "\li367 COMMENTO: "; RTRIM$(onecomment.content); " \pard "
 						END IF
 						IF incomment2% THEN
 							onecomment.date = line$
-							PRINT #2, "\li567 "; onecomment.date; "\pard "    'spariscono i trattini???
+							PRINT #2, "\li567 "; onecomment.date; "; \pard "    'spariscono i trattini???
 						END IF
 						IF incomment3% THEN
 							onecomment.author = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "\li767 "; RTRIM$(onecomment.author); "\pard "
+							PRINT #2, "\li767 "; RTRIM$(onecomment.author); " \pard "
 						END IF
 
 				END SELECT
@@ -424,6 +442,12 @@ WHILE NOT EOF(1)
 					END SELECT
 				END IF
 			END IF
+
+			'PRINT LEN(line$), SEEK(1)
+			'IF LEN(line$) > 4000 AND incomment% = 0 AND intag% = 0 AND inwp% = 0 THEN
+			IF LEN(line$) > 2000 THEN
+				PRINT #2, line$: line$ = ""' patch out of string space coglioni
+			END IF
 			line$ = line$ + a$
 			IF intag% = 0 THEN
 				IF inwp% = 0 THEN
@@ -451,6 +475,7 @@ CLOSE 1
 
 PRINT : PRINT "Finito."
 
+REM $STATIC
 FUNCTION calcdate (a$)
 	dYear% = VAL(MID$(a$, 13, 4))
 	dDay% = VAL(MID$(a$, 6, 2))
