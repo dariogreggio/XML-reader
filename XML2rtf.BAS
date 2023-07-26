@@ -3,9 +3,9 @@ DECLARE FUNCTION calcdate (a$)
 DECLARE FUNCTION getdate$ ()
 
 ' converter for Wordpress Export XML files to RTF, so that the idiots over there won't cause any more damage blocking blogs for no reason
-' G.Dar 2/7/2023-23/7/2023
+' G.Dar 2/7/2023-26/7/2023
 
-' https://www.biblioscape.com/rtf15_spec.htm#Heading49
+' https://www.biblioscape.com/rtf15_spec.htm
 
 CLS
 DIM SHARED of$
@@ -15,14 +15,13 @@ TYPE post
 	date AS STRING * 16
 	author AS STRING * 32
 	content AS STRING * 8000
-	link AS STRING * 64
+	link AS STRING * 128
 	categories AS STRING * 160
 END TYPE
 TYPE comment
 	date AS STRING * 16
 	author AS STRING * 32
 	content AS STRING * 512
-	
 END TYPE
 
 DIM onepost AS post, onecomment AS comment
@@ -126,16 +125,16 @@ WHILE NOT EOF(1)
 			ELSE
 				SELECT CASE line$
 					CASE "p"
-						'PRINT #2, "{\pard "
+						PRINT #2, "{\qj "
 					CASE "/p"
-						'PRINT #2, "}"
+						PRINT #2, "}"
 					CASE "title"
 						IF initem% = 0 THEN
 							PRINT #2, "{\pard\fs36\i\b "    'PRINT #2, "{\title "
 'PRINT #2, "{\info";"{\title ";
 						ELSE
 							PRINT #2, "{\pard\fs28\ul "
-							IF onepost.categories <> "" THEN PRINT #2, "\par "
+							IF onepost.categories <> "" OR onecomment.content <> "" THEN PRINT #2, "\par "
 						END IF
 						intitle% = 1
 					CASE "/title"
@@ -249,9 +248,13 @@ WHILE NOT EOF(1)
 						onepost.content = onepost.content + "</strike>"
 '          CASE "span style=" + CHR$(34) + "text/decoration: underline" + CHR$(34)
 					CASE "span style=" + CHR$(34) + "text-decoration: underline" + CHR$(34)
-						checkBR
-						PRINT #2, "{\ul"
-						onepost.content = onepost.content + "{\ul"
+							checkBR
+							PRINT #2, "{\ul"
+							onepost.content = onepost.content + "{\ul"
+					CASE "span"
+							checkBR
+							PRINT #2, "{"
+							onepost.content = onepost.content + "{"
 					CASE "/span"
 						checkBR
 						PRINT #2, "}"
@@ -269,10 +272,10 @@ WHILE NOT EOF(1)
 						PRINT #2, "{\levelnumbers\'01;}";
 						PRINT #2, "\fi-360\li360\jclisttab\tx360 }";
 						PRINT #2, "{\listname ;}";
-						PRINT #2, "\listid1522279999}}";
+						PRINT #2, "\listid1522279999}}"
 						PRINT #2, "{\*\listoverridetable";
 						PRINT #2, "{\listoverride\listid1522279999\listoverridecount0\ls1};"
-						PRINT #2, "{\listoverride\listid161094266\listoverridecount0\ls2}}"
+						PRINT #2, "{\listoverride\listid161094266\listoverridecount0\ls2}"
 
 
 						onepost.content = onepost.content + "<ul>"  ' finire
@@ -280,8 +283,8 @@ WHILE NOT EOF(1)
 						PRINT #2, "}"
 						onepost.content = onepost.content + "}"
 					CASE "li"
-						PRINT #2, "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
-						onepost.content = onepost.content + "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
+						PRINT #2, "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
+						onepost.content = onepost.content + "{\pntext\pard\plain\f3\fs20\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}\pard \fi-360\li360\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {"
 					CASE "/li"
 						PRINT #2, "}"
 						onepost.content = onepost.content + "}"
@@ -312,7 +315,7 @@ WHILE NOT EOF(1)
 
 							onepost.title = ""     ' ...
 							onepost.title = MID$(line$, 9, LEN(line$) - 10)   ' ]] finali...
-							PRINT #2, "{\pard "; onepost.title; "}"
+							PRINT #2, "{\pard "; RTRIM$(onepost.title); "}"
 
 							
 							onepost.date = ""
@@ -320,31 +323,39 @@ WHILE NOT EOF(1)
 							onepost.link = ""
 							onepost.author = ""
 							onepost.content = ""
+							onecomment.content = ""
+							onecomment.date = ""
+							onecomment.author = ""
 
 						END IF
 						IF LEFT$(line$, 6) = "a href" THEN
 							checkBR
-							PRINT #2, "{\field{\*\fldinst { HYPERLINK "; line$;
-
-							onepost.content = onepost.content + "{" + line$
+							PRINT #2, "{\field{\*\fldinst { HYPERLINK "; MID$(line$, 8)
+							PRINT #2, "}}}{\fldrst {\cs15\ul\cf2 ";
+							onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + MID$(line$, 8) + "}}}{\fldrst {\cs15\ul\cf2 "
 						END IF
 						IF line$ = "/a" THEN
 							checkBR
-							PRINT #2, "a } } }"
-							onepost.content = onepost.content + "} } }"
+							PRINT #2, "}}"
+							onepost.content = onepost.content + "}}"
 						END IF
 						IF LEFT$(line$, 9) = "div class" THEN   ' x youtube link, ev finire
 							checkBR
 							PRINT #2, "{\field{\*\fldinst { HYPERLINK " + line$ + " }{{\*\datafield "
 							'PRINT #2, "00d0c9ea79f9bace118c8200aa004ba90b02000000170000001a000000680074007400700073003a002f002f007700770077002e00660061006300650062006f006f006b002e0063006f006d002f000000e0c9ea79f9bace118c8200aa004ba90b4c000000680074007400700073003a002f002f007700770077002e006600"
 							'PRINT #2, "61006300650062006f006f006b002e0063006f006d002f000000795881f43b1d7f48af2c825dc485276300000000a5ab0000}}}{\fldrslt {\cs15\ul\cf2 "; line$;       ' "}}}"
+							PRINT #2, "0000}}}{\fldrslt {\cs15\ul\cf2 "; line$       ' "}}}"
 
 							onepost.content = onepost.content + "{\field{\*\fldinst { HYPERLINK " + line$   ' + "}}}"  ' finire..
 						END IF
+						IF LEFT$(line$, 9) = "div style" THEN   ' in pratica inutili
+							checkBR
+							PRINT #2, "{{{style"
+						END IF
 						IF LEFT$(line$, 4) = "/div" THEN
 							checkBR
-							PRINT #2, "} } }"
-							onepost.content = onepost.content + "} } }"
+							PRINT #2, "}}}"
+							onepost.content = onepost.content + "}}}"
 						END IF
 						IF LEFT$(line$, 8) = "category" THEN  ' tag/categorie
 							checkBR
@@ -358,9 +369,13 @@ WHILE NOT EOF(1)
 						 
 						END IF
 
+						IF LEFT$(line$, 8) = "ul class" THEN   ' diciamo patch per ora
+							PRINT #2, "{"
+						END IF
+
 						IF incomment% THEN
 							onecomment.content = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "\li367 COMMENTO: "; onecomment.content; "\pard "
+							PRINT #2, "\li367 COMMENTO: "; RTRIM$(onecomment.content); "\pard "
 						END IF
 						IF incomment2% THEN
 							onecomment.date = line$
@@ -368,7 +383,7 @@ WHILE NOT EOF(1)
 						END IF
 						IF incomment3% THEN
 							onecomment.author = MID$(line$, 9, LEN(line$) - 10)
-							PRINT #2, "\li767 "; onecomment.author; "\pard "
+							PRINT #2, "\li767 "; RTRIM$(onecomment.author); "\pard "
 						END IF
 
 				END SELECT
